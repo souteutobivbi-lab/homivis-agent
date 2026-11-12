@@ -11,12 +11,75 @@ import subprocess
 import tempfile
 import requests
 import imageio_ffmpeg
-from flask import Flask, jsonify, request, Response, send_from_directory, send_file
+from functools import wraps
+from flask import Flask, jsonify, request, Response, send_from_directory, send_file, session, redirect, url_for
 from PIL import Image
 
 FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
+app.secret_key = os.environ.get("SECRET_KEY", "homivis-dev-secret-change-in-prod")
+
+# ── Auth ──────────────────────────────────────────────────────────────────────
+ACCESS_PASSWORD = os.environ.get("ACCESS_PASSWORD", "homivis2026")
+
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get("authenticated"):
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    error = ""
+    if request.method == "POST":
+        if request.form.get("password") == ACCESS_PASSWORD:
+            session["authenticated"] = True
+            return redirect(url_for("index"))
+        error = "Incorrect password"
+    return f"""<!doctype html>
+<html>
+<head>
+  <title>Homivis — Login</title>
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    *{{box-sizing:border-box;margin:0;padding:0}}
+    body{{min-height:100vh;display:flex;align-items:center;justify-content:center;
+         background:#0a0a0a;font-family:system-ui,sans-serif}}
+    .card{{background:#141414;border:1px solid #222;border-radius:12px;
+           padding:40px;width:100%;max-width:360px}}
+    .logo{{font-size:22px;font-weight:700;color:#fff;letter-spacing:-0.5px;
+           margin-bottom:8px}}
+    .sub{{color:#666;font-size:14px;margin-bottom:32px}}
+    input{{width:100%;padding:12px 14px;background:#1e1e1e;border:1px solid #333;
+           border-radius:8px;color:#fff;font-size:15px;outline:none;margin-bottom:12px}}
+    input:focus{{border-color:#555}}
+    button{{width:100%;padding:12px;background:#fff;color:#000;border:none;
+            border-radius:8px;font-size:15px;font-weight:600;cursor:pointer}}
+    button:hover{{background:#e8e8e8}}
+    .error{{color:#f55;font-size:13px;margin-top:8px}}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">Homivis</div>
+    <div class="sub">Image Library — Staff Access</div>
+    <form method="post">
+      <input type="password" name="password" placeholder="Enter password" autofocus>
+      <button type="submit">Sign in</button>
+      {'<div class="error">' + error + '</div>' if error else ''}
+    </form>
+  </div>
+</body>
+</html>"""
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
 
 LIBRARY_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "image_library.json")
 VIDEOS_DIR   = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "videos")
@@ -75,17 +138,25 @@ def fetch_approved_tracks():
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
+@app.route("/robots.txt")
+def robots():
+    return Response("User-agent: *\nDisallow: /\n", mimetype="text/plain")
+
+
 @app.route("/")
+@login_required
 def index():
     return send_from_directory("templates", "index.html")
 
 
 @app.route("/api/library")
+@login_required
 def api_library():
     return jsonify(load_library())
 
 
 @app.route("/api/music")
+@login_required
 def api_music():
     """List all approved tracks from Supabase artist_submissions."""
     try:
@@ -97,6 +168,7 @@ def api_music():
 
 
 @app.route("/api/mark_posted", methods=["POST"])
+@login_required
 def api_mark_posted():
     data = request.json
     library = load_library()
@@ -112,6 +184,7 @@ def api_mark_posted():
 
 
 @app.route("/api/download")
+@login_required
 def api_download():
     url = request.args.get("url", "")
     if not url.startswith("http"):
@@ -124,6 +197,7 @@ def api_download():
 
 
 @app.route("/api/create_video", methods=["POST"])
+@login_required
 def api_create_video():
     """
     Multipart form:
