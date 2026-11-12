@@ -18,7 +18,7 @@ from PIL import Image
 FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
-app.secret_key = os.environ.get("SECRET_KEY", "homivis-dev-secret-change-in-prod")
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "homivis-dev-secret-change-in-prod")
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
 ACCESS_PASSWORD = os.environ.get("ACCESS_PASSWORD", "homivis2026")
