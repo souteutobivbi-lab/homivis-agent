@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -27,7 +27,7 @@ header span { font-size: .78rem; color: #666 }
 
 .layout { display: flex; height: calc(100vh - 53px) }
 
-/* ── Tree sidebar ── */
+/* â”€â”€ Tree sidebar â”€â”€ */
 #prof-list {
   width: 300px; min-width: 260px; overflow-y: auto;
   border-right: 1px solid #2a2a2a; background: #111;
@@ -78,7 +78,7 @@ header span { font-size: .78rem; color: #666 }
 }
 .prof-badge.has-posted { background: #152015; color: #5a9 }
 
-/* ── Image panel ── */
+/* â”€â”€ Image panel â”€â”€ */
 #image-panel {
   flex: 1; overflow-y: auto; padding: 24px;
   background: #0f0f0f;
@@ -233,7 +233,7 @@ header span { font-size: .78rem; color: #666 }
 <div id="toast"></div>
 
 <script>
-// ── UK city → region mapping ──────────────────────────────────────────────────
+// â”€â”€ UK city â†’ region mapping â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 var CITY_REGION = {
   // London
   'london': 'London', 'city of london': 'London', 'westminster': 'London',
@@ -356,7 +356,7 @@ function cityToRegion(city) {
   return CITY_REGION[key] || 'Other';
 }
 
-// ── State ─────────────────────────────────────────────────────────────────────
+// â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 var library = null;
 var activeProfId = null;
 var dragSrcIdx = null;
@@ -479,7 +479,7 @@ function renderStats() {
     p.images.forEach(function(i) { if (i.posted) posted++; });
   });
   document.getElementById('stats').textContent =
-    library.professionals.length + ' pros · ' + total + ' images · ' + posted + ' posted';
+    library.professionals.length + ' pros Â· ' + total + ' images Â· ' + posted + ' posted';
 }
 
 function onFilter() {
@@ -502,7 +502,7 @@ function onFilter() {
 }
 
 function renderTree(profs) {
-  // Group: region → city → professionals
+  // Group: region â†’ city â†’ professionals
   var tree = {};
   profs.forEach(function(p) {
     var region = cityToRegion(p.city);
@@ -589,7 +589,7 @@ function renderTree(profs) {
   });
 }
 
-// ── Professional panel ────────────────────────────────────────────────────────
+// â”€â”€ Professional panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function getProf(id) {
   return library.professionals.find(function(p) { return p.professional_id === id; });
@@ -624,13 +624,13 @@ function renderPanel(prof) {
       '<input type="number" id="vb-dur" value="3" min="1" max="10">' +
       '<label>Format</label>' +
       '<select id="vb-fmt">' +
-        '<option value="square">Square 1080×1080</option>' +
-        '<option value="portrait">Portrait 1080×1350</option>' +
-        '<option value="reel">Reel 1080×1920 (9:16)</option>' +
+        '<option value="square">Square 1080Ã—1080</option>' +
+        '<option value="portrait">Portrait 1080Ã—1350</option>' +
+        '<option value="reel">Reel 1080Ã—1920 (9:16)</option>' +
       '</select>' +
       '<div class="vb-sep"></div>' +
       '<label>Track</label>' +
-      '<select id="vb-track"><option value="">— No music —</option></select>' +
+      '<select id="vb-track"><option value="">â€” No music â€”</option></select>' +
       '<label style="color:#444">or upload</label>' +
       '<input type="file" id="vb-upload" accept="audio/*">' +
       '<span class="drag-hint">&#x2630; Drag to reorder</span>' +
@@ -673,18 +673,18 @@ function buildCard(prof, imgIdx, seq) {
   var postedCls = img.posted ? ' posted' : '';
   var typeCls = img.image_type === 'banner' ? ' banner' : '';
   var typeLabel = img.image_type.replace(/_/g,' ');
-  var postLabel = img.posted ? '✓ Posted' : 'Mark posted';
+  var postLabel = img.posted ? 'âœ“ Posted' : 'Mark posted';
   var postDone  = img.posted ? ' done' : '';
   return '<div class="image-card' + postedCls + '" data-img-idx="' + imgIdx + '" data-seq="' + seq + '" draggable="true">' +
-    '<div class="drag-handle">☰</div>' +
+    '<div class="drag-handle">â˜°</div>' +
     '<div class="seq-badge">' + (seq+1) + '</div>' +
     '<div class="img-wrap"><img src="' + esc(img.image_url) + '" alt="' + esc(typeLabel) + '" ' +
       'onerror="this.style.display=\'none\';this.parentNode.innerHTML+=\'<div class=broken>Unavailable</div>\'"></div>' +
     '<div class="card-body">' +
       '<div class="card-type' + typeCls + '">' + typeLabel + '</div>' +
-      '<div class="caption-box">' + nl2br(img.instagram_caption) + '</div>' +
+      '<div class="caption-box">' + nl2br(prof.instagram_caption || img.instagram_caption) + '</div>' +
       '<button class="toggle-btn">Show more</button>' +
-      '<div class="hashtags">' + esc(img.hashtags) + '</div>' +
+      '<div class="hashtags">' + esc(prof.hashtags || img.hashtags) + '</div>' +
       '<div class="card-actions">' +
         '<button class="btn btn-copy" data-img-idx="' + imgIdx + '">&#x1F4CB; Copy</button>' +
         '<button class="btn btn-dl"   data-img-idx="' + imgIdx + '">&#x2B07; Download</button>' +
@@ -709,7 +709,7 @@ function attachCardEvents(prof) {
   grid.querySelectorAll('.btn-copy').forEach(function(btn) {
     btn.addEventListener('click', function() {
       var img = prof.images[parseInt(btn.dataset.imgIdx)];
-      navigator.clipboard.writeText(img.instagram_caption + '\n\n' + img.hashtags)
+      navigator.clipboard.writeText((prof.instagram_caption || img.instagram_caption) + '\n\n' + (prof.hashtags || img.hashtags))
         .then(function() { toast('Caption copied!'); })
         .catch(function() { toast('Copy failed'); });
     });
@@ -744,7 +744,7 @@ function attachCardEvents(prof) {
       var card = grid.querySelector('[data-img-idx="' + imgIdx + '"].image-card');
       if (card) {
         card.classList.toggle('posted', img.posted);
-        btn.textContent = img.posted ? '✓ Posted' : 'Mark posted';
+        btn.textContent = img.posted ? 'âœ“ Posted' : 'Mark posted';
         btn.classList.toggle('done', img.posted);
       }
       renderStats();
@@ -781,7 +781,7 @@ function attachCardEvents(prof) {
   });
 }
 
-// ── Video ─────────────────────────────────────────────────────────────────────
+// â”€â”€ Video â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function createVideo(prof) {
   var dur         = parseInt(document.getElementById('vb-dur').value) || 3;
@@ -840,3 +840,5 @@ init();
 </script>
 </body>
 </html>
+
+

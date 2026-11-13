@@ -1,0 +1,843 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Homivis Image Library</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0 }
+body { font-family: system-ui, sans-serif; background: #0f0f0f; color: #eee; }
+
+header {
+  position: sticky; top: 0; z-index: 100;
+  background: #1a1a1a; border-bottom: 1px solid #2a2a2a;
+  padding: 12px 20px; display: flex; align-items: center; gap: 12px;
+}
+header h1 { font-size: 1rem; font-weight: 600; color: #fff; flex: 1 }
+header span { font-size: .78rem; color: #666 }
+#search {
+  padding: 7px 12px; border-radius: 7px; border: 1px solid #333;
+  background: #222; color: #eee; font-size: .85rem; width: 200px;
+}
+#filter {
+  padding: 7px 12px; border-radius: 7px; border: 1px solid #333;
+  background: #222; color: #eee; font-size: .85rem;
+}
+
+.layout { display: flex; height: calc(100vh - 53px) }
+
+/* â”€â”€ Tree sidebar â”€â”€ */
+#prof-list {
+  width: 300px; min-width: 260px; overflow-y: auto;
+  border-right: 1px solid #2a2a2a; background: #111;
+}
+
+.region-row {
+  padding: 9px 14px; cursor: pointer; user-select: none;
+  border-bottom: 1px solid #1a1a1a;
+  display: flex; align-items: center; gap: 7px;
+  background: #161616;
+}
+.region-row:hover { background: #1c1c1c }
+.region-name { font-size: .82rem; font-weight: 600; color: #ccc; flex: 1 }
+.region-count { font-size: .72rem; color: #555 }
+.caret { font-size: .65rem; color: #555; transition: transform .15s }
+.caret.open { transform: rotate(90deg) }
+
+.city-group { display: none }
+.city-group.open { display: block }
+
+.city-row {
+  padding: 7px 14px 7px 28px; cursor: pointer; user-select: none;
+  border-bottom: 1px solid #191919;
+  display: flex; align-items: center; gap: 7px;
+}
+.city-row:hover { background: #1a1a1a }
+.city-name { font-size: .8rem; color: #aaa; flex: 1 }
+.city-count { font-size: .7rem; color: #444 }
+.city-caret { font-size: .6rem; color: #444; transition: transform .15s }
+.city-caret.open { transform: rotate(90deg) }
+
+.prof-group { display: none }
+.prof-group.open { display: block }
+
+.prof-item {
+  padding: 9px 14px 9px 44px; cursor: pointer;
+  border-bottom: 1px solid #161616;
+  transition: background .1s;
+}
+.prof-item:hover { background: #1a1a1a }
+.prof-item.active { background: #1e1e2e; border-left: 3px solid #7c6fcd; padding-left: 41px }
+.prof-name { font-size: .82rem; color: #ccc }
+.prof-meta { font-size: .72rem; color: #555; margin-top: 2px }
+.prof-badge {
+  display: inline-block; margin-top: 3px;
+  padding: 1px 7px; border-radius: 20px;
+  background: #222; font-size: .68rem; color: #666;
+}
+.prof-badge.has-posted { background: #152015; color: #5a9 }
+
+/* â”€â”€ Image panel â”€â”€ */
+#image-panel {
+  flex: 1; overflow-y: auto; padding: 24px;
+  background: #0f0f0f;
+}
+#panel-header { margin-bottom: 16px }
+#panel-header h2 { font-size: 1.1rem; color: #fff }
+#panel-header p { font-size: .82rem; color: #666; margin-top: 3px }
+#panel-header a { color: #7c6fcd; text-decoration: none; font-size: .8rem }
+
+#video-bar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: #1a1a2a; border: 1px solid #2a2a4a; border-radius: 10px;
+  padding: 10px 14px; margin-bottom: 4px;
+}
+#video-bar label { font-size: .78rem; color: #aab; white-space: nowrap }
+#video-bar select, #video-bar input[type=number] {
+  padding: 5px 9px; border-radius: 6px; border: 1px solid #333;
+  background: #222; color: #eee; font-size: .78rem;
+}
+#vb-dur { width: 60px }
+#vb-track { min-width: 180px; max-width: 260px }
+#vb-upload { color: #666; font-size: .72rem; max-width: 160px }
+.vb-sep { width: 1px; background: #2a2a4a; align-self: stretch; margin: 0 4px }
+.btn-video {
+  padding: 8px 18px; border-radius: 8px; border: none;
+  background: #7c6fcd; color: #fff; font-size: .82rem;
+  cursor: pointer; font-weight: 600; margin-left: auto;
+}
+.btn-video:disabled { opacity: .5; cursor: default }
+.drag-hint { font-size: .72rem; color: #444 }
+
+/* Audio picker bar */
+#audio-bar {
+  display: none; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: #12121f; border: 1px solid #2a2a4a; border-top: none;
+  border-radius: 0 0 10px 10px; padding: 8px 14px; margin-bottom: 18px;
+}
+#audio-bar.show { display: flex }
+#btn-audio-play {
+  width: 30px; height: 30px; border-radius: 50%; border: none;
+  background: #7c6fcd; color: #fff; font-size: .85rem;
+  cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+}
+#audio-scrubber {
+  flex: 1; min-width: 120px; accent-color: #7c6fcd; cursor: pointer;
+}
+#audio-time { font-size: .75rem; color: #666; white-space: nowrap; min-width: 80px }
+#btn-set-start {
+  padding: 4px 10px; border-radius: 6px; border: 1px solid #3a3a6a;
+  background: #1a1a3a; color: #aab; font-size: .74rem; cursor: pointer; white-space: nowrap;
+}
+#btn-set-start:hover { background: #2a2a4a }
+#start-display { font-size: .75rem; color: #7c6fcd; white-space: nowrap }
+
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 14px;
+}
+.image-card {
+  background: #1a1a1a; border-radius: 10px; overflow: hidden;
+  border: 1px solid #252525; transition: border-color .2s;
+  cursor: grab; position: relative;
+}
+.image-card.posted { opacity: .4 }
+.image-card:hover { border-color: #3a3a3a }
+.image-card.dragging { opacity: .25; border-color: #7c6fcd; cursor: grabbing }
+.image-card.drag-over { border-color: #7c6fcd; border-style: dashed }
+.drag-handle {
+  position: absolute; top: 7px; left: 7px; z-index: 2;
+  background: rgba(0,0,0,.55); border-radius: 5px; padding: 3px 5px;
+  font-size: .65rem; color: #999; cursor: grab; user-select: none;
+}
+.seq-badge {
+  position: absolute; top: 7px; right: 7px; z-index: 2;
+  background: rgba(124,111,205,.8); border-radius: 20px;
+  padding: 2px 7px; font-size: .68rem; color: #fff; font-weight: 600;
+}
+.img-wrap {
+  width: 100%; aspect-ratio: 4/3; overflow: hidden;
+  background: #1e1e1e; display: flex; align-items: center; justify-content: center;
+}
+.img-wrap img { width: 100%; height: 100%; object-fit: cover }
+.broken { color: #444; font-size: .75rem; text-align: center; padding: 12px }
+.card-body { padding: 11px }
+.card-type {
+  font-size: .68rem; text-transform: uppercase; letter-spacing: .06em;
+  color: #666; margin-bottom: 5px;
+}
+.card-type.banner { color: #7c6fcd }
+.caption-box {
+  font-size: .76rem; color: #999; line-height: 1.5;
+  max-height: 54px; overflow: hidden;
+}
+.caption-box.open { max-height: none }
+.toggle-btn {
+  background: none; border: none; color: #7c6fcd; font-size: .72rem;
+  cursor: pointer; padding: 2px 0; margin-top: 2px;
+}
+.hashtags { font-size: .68rem; color: #444; margin-top: 4px; line-height: 1.4 }
+.card-actions { display: flex; gap: 5px; margin-top: 9px; flex-wrap: wrap }
+.btn {
+  padding: 5px 10px; border-radius: 6px; border: none;
+  font-size: .74rem; cursor: pointer; font-weight: 500;
+}
+.btn-copy { background: #22223a; color: #99a }
+.btn-dl   { background: #223a22; color: #7a7 }
+.btn-post { background: #3a2222; color: #a77 }
+.btn-post.done { background: #152015; color: #5a9 }
+
+#video-progress {
+  display: none; align-items: center; gap: 10px;
+  background: #1a1a2a; border: 1px solid #2a2a4a; border-radius: 10px;
+  padding: 10px 14px; margin-bottom: 18px; font-size: .82rem; color: #aab;
+}
+#video-progress.show { display: flex }
+.spinner {
+  width: 16px; height: 16px; border: 2px solid #2a2a4a;
+  border-top-color: #7c6fcd; border-radius: 50%;
+  animation: spin .7s linear infinite; flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg) } }
+
+#toast {
+  position: fixed; bottom: 20px; right: 20px;
+  background: #2a2a2a; color: #eee; padding: 9px 16px;
+  border-radius: 8px; font-size: .82rem;
+  opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 999;
+}
+#toast.show { opacity: 1 }
+.empty { padding: 48px 20px; text-align: center; color: #333 }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>&#x1F3E1; Homivis Image Library</h1>
+  <input id="search" type="text" placeholder="Search...">
+  <select id="filter">
+    <option value="all">All</option>
+    <option value="unposted">Unposted</option>
+    <option value="posted">Posted</option>
+  </select>
+  <span id="stats"></span>
+</header>
+
+<div class="layout">
+  <div id="prof-list"><div class="empty">Loading...</div></div>
+  <div id="image-panel"><div class="empty">Select a professional to see their images</div></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// â”€â”€ UK city â†’ region mapping â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+var CITY_REGION = {
+  // London
+  'london': 'London', 'city of london': 'London', 'westminster': 'London',
+  'hackney': 'London', 'islington': 'London', 'camden': 'London',
+  'hammersmith': 'London', 'fulham': 'London', 'chelsea': 'London',
+  'kensington': 'London', 'brixton': 'London', 'clapham': 'London',
+  'peckham': 'London', 'lewisham': 'London', 'greenwich': 'London',
+  'woolwich': 'London', 'croydon': 'London', 'richmond': 'London',
+  'wimbledon': 'London', 'putney': 'London', 'tooting': 'London',
+  'streatham': 'London', 'balham': 'London', 'ealing': 'London',
+  'acton': 'London', 'chiswick': 'London', 'brentford': 'London',
+  'wembley': 'London', 'harrow': 'London', 'enfield': 'London',
+  'barnet': 'London', 'finchley': 'London', 'tottenham': 'London',
+  'walthamstow': 'London', 'stratford': 'London', 'ilford': 'London',
+  'romford': 'London', 'barking': 'London', 'dagenham': 'London',
+  'bromley': 'London', 'beckenham': 'London', 'sutton': 'London',
+  'kingston': 'London', 'twickenham': 'London', 'hounslow': 'London',
+  'southwark': 'London', 'bermondsey': 'London', 'elephant and castle': 'London',
+  'vauxhall': 'London', 'battersea': 'London', 'wandsworth': 'London',
+  'tower hamlets': 'London', 'bethnal green': 'London', 'bow': 'London',
+  'stepney': 'London', 'poplar': 'London', 'deptford': 'London',
+  'new cross': 'London', 'catford': 'London', 'sydenham': 'London',
+  'norwood': 'London', 'mitcham': 'London', 'morden': 'London',
+  'north london': 'London', 'south london': 'London', 'east london': 'London',
+  'west london': 'London', 'north west london': 'London',
+  // South East
+  'brighton': 'South East', 'hove': 'South East', 'worthing': 'South East',
+  'crawley': 'South East', 'guildford': 'South East', 'woking': 'South East',
+  'farnham': 'South East', 'aldershot': 'South East', 'basingstoke': 'South East',
+  'winchester': 'South East', 'portsmouth': 'South East', 'southampton': 'South East',
+  'eastbourne': 'South East', 'hastings': 'South East', 'tunbridge wells': 'South East',
+  'maidstone': 'South East', 'canterbury': 'South East', 'dover': 'South East',
+  'folkestone': 'South East', 'margate': 'South East', 'ramsgate': 'South East',
+  'oxford': 'South East', 'reading': 'South East', 'slough': 'South East',
+  'windsor': 'South East', 'newbury': 'South East', 'milton keynes': 'South East',
+  'aylesbury': 'South East', 'high wycombe': 'South East', 'luton': 'South East',
+  'stevenage': 'South East', 'hertford': 'South East', 'watford': 'South East',
+  'st albans': 'South East', 'hemel hempstead': 'South East',
+  'chichester': 'South East', 'lewes': 'South East', 'horsham': 'South East',
+  'bognor regis': 'South East', 'reigate': 'South East',
+  // South West
+  'bristol': 'South West', 'bath': 'South West', 'exeter': 'South West',
+  'plymouth': 'South West', 'torquay': 'South West', 'truro': 'South West',
+  'falmouth': 'South West', 'penzance': 'South West', 'newquay': 'South West',
+  'taunton': 'South West', 'yeovil': 'South West', 'bournemouth': 'South West',
+  'poole': 'South West', 'dorchester': 'South West', 'weymouth': 'South West',
+  'salisbury': 'South West', 'swindon': 'South West', 'cheltenham': 'South West',
+  'gloucester': 'South West', 'cirencester': 'South West', 'stroud': 'South West',
+  'weston-super-mare': 'South West', 'bridgwater': 'South West',
+  'barnstaple': 'South West', 'bodmin': 'South West',
+  // East of England
+  'cambridge': 'East of England', 'norwich': 'East of England',
+  'ipswich': 'East of England', 'colchester': 'East of England',
+  'chelmsford': 'East of England', 'southend-on-sea': 'East of England',
+  'basildon': 'East of England', 'harlow': 'East of England',
+  'bedford': 'East of England', 'peterborough': 'East of England',
+  'ely': 'East of England', 'kings lynn': 'East of England',
+  'great yarmouth': 'East of England',
+  // East Midlands
+  'leicester': 'East Midlands', 'nottingham': 'East Midlands',
+  'derby': 'East Midlands', 'lincoln': 'East Midlands',
+  'northampton': 'East Midlands', 'loughborough': 'East Midlands',
+  'mansfield': 'East Midlands', 'chesterfield': 'East Midlands',
+  // West Midlands
+  'birmingham': 'West Midlands', 'coventry': 'West Midlands',
+  'wolverhampton': 'West Midlands', 'walsall': 'West Midlands',
+  'west bromwich': 'West Midlands', 'dudley': 'West Midlands',
+  'solihull': 'West Midlands', 'stoke-on-trent': 'West Midlands',
+  'worcester': 'West Midlands', 'hereford': 'West Midlands',
+  'shrewsbury': 'West Midlands', 'telford': 'West Midlands',
+  'stafford': 'West Midlands', 'lichfield': 'West Midlands',
+  // Yorkshire
+  'leeds': 'Yorkshire', 'sheffield': 'Yorkshire', 'bradford': 'Yorkshire',
+  'hull': 'Yorkshire', 'york': 'Yorkshire', 'harrogate': 'Yorkshire',
+  'huddersfield': 'Yorkshire', 'wakefield': 'Yorkshire',
+  'barnsley': 'Yorkshire', 'rotherham': 'Yorkshire', 'doncaster': 'Yorkshire',
+  'scarborough': 'Yorkshire', 'ripon': 'Yorkshire',
+  // North West
+  'manchester': 'North West', 'liverpool': 'North West',
+  'salford': 'North West', 'bolton': 'North West', 'oldham': 'North West',
+  'rochdale': 'North West', 'stockport': 'North West', 'wigan': 'North West',
+  'bury': 'North West', 'burnley': 'North West', 'blackburn': 'North West',
+  'blackpool': 'North West', 'preston': 'North West', 'lancaster': 'North West',
+  'carlisle': 'North West', 'barrow-in-furness': 'North West',
+  'chester': 'North West', 'warrington': 'North West',
+  'birkenhead': 'North West', 'st helens': 'North West',
+  // North East
+  'newcastle': 'North East', 'newcastle upon tyne': 'North East',
+  'sunderland': 'North East', 'durham': 'North East',
+  'middlesbrough': 'North East', 'gateshead': 'North East',
+  'hartlepool': 'North East', 'darlington': 'North East',
+  'stockton-on-tees': 'North East',
+  // Scotland
+  'edinburgh': 'Scotland', 'glasgow': 'Scotland', 'aberdeen': 'Scotland',
+  'dundee': 'Scotland', 'inverness': 'Scotland', 'perth': 'Scotland',
+  'stirling': 'Scotland', 'falkirk': 'Scotland', 'paisley': 'Scotland',
+  'motherwell': 'Scotland', 'hamilton': 'Scotland', 'east kilbride': 'Scotland',
+  'livingston': 'Scotland', 'dunfermline': 'Scotland', 'kirkcaldy': 'Scotland',
+  'st andrews': 'Scotland', 'fort william': 'Scotland', 'oban': 'Scotland',
+  // Wales
+  'cardiff': 'Wales', 'swansea': 'Wales', 'newport': 'Wales',
+  'wrexham': 'Wales', 'bangor': 'Wales', 'aberystwyth': 'Wales',
+  'llandudno': 'Wales', 'merthyr tydfil': 'Wales', 'caerphilly': 'Wales',
+  'bridgend': 'Wales', 'neath': 'Wales', 'port talbot': 'Wales',
+  // Northern Ireland
+  'belfast': 'Northern Ireland', 'derry': 'Northern Ireland',
+  'londonderry': 'Northern Ireland', 'lisburn': 'Northern Ireland',
+  'newry': 'Northern Ireland', 'armagh': 'Northern Ireland',
+};
+
+var REGION_ORDER = [
+  'London', 'South East', 'South West', 'East of England',
+  'East Midlands', 'West Midlands', 'Yorkshire',
+  'North West', 'North East', 'Scotland', 'Wales', 'Northern Ireland', 'Other'
+];
+
+function cityToRegion(city) {
+  if (!city) return 'Other';
+  var key = city.toLowerCase().trim();
+  return CITY_REGION[key] || 'Other';
+}
+
+// â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+var library = null;
+var activeProfId = null;
+var dragSrcIdx = null;
+var openRegions = {};
+var openCities = {};
+var cachedTracks = [];
+
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function nl2br(str) { return esc(str).replace(/\n/g,'<br>'); }
+
+function toast(msg) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(function() { el.classList.remove('show'); }, 2500);
+}
+
+var audioPlayer = null;
+var audioStartSec = 0;
+
+function fmtTime(s) {
+  s = Math.floor(s || 0);
+  return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
+}
+
+function setupAudioBar(url) {
+  var bar      = document.getElementById('audio-bar');
+  var playBtn  = document.getElementById('btn-audio-play');
+  var scrubber = document.getElementById('audio-scrubber');
+  var timeEl   = document.getElementById('audio-time');
+  var setBtn   = document.getElementById('btn-set-start');
+  var startEl  = document.getElementById('start-display');
+  if (!bar) return;
+
+  // Destroy previous player
+  if (audioPlayer) { audioPlayer.pause(); audioPlayer = null; }
+  audioStartSec = 0;
+  if (startEl) startEl.textContent = 'Start: 0:00';
+
+  if (!url) { bar.classList.remove('show'); return; }
+
+  bar.classList.add('show');
+  audioPlayer = new Audio(url);
+  audioPlayer.addEventListener('loadedmetadata', function() {
+    scrubber.max = audioPlayer.duration;
+    if (timeEl) timeEl.textContent = '0:00 / ' + fmtTime(audioPlayer.duration);
+  });
+  audioPlayer.addEventListener('timeupdate', function() {
+    scrubber.value = audioPlayer.currentTime;
+    if (timeEl) timeEl.textContent = fmtTime(audioPlayer.currentTime) + ' / ' + fmtTime(audioPlayer.duration);
+  });
+  audioPlayer.addEventListener('ended', function() {
+    if (playBtn) playBtn.innerHTML = '&#x25B6;';
+  });
+
+  playBtn.onclick = function() {
+    if (audioPlayer.paused) {
+      audioPlayer.play();
+      playBtn.innerHTML = '&#x23F8;';
+    } else {
+      audioPlayer.pause();
+      playBtn.innerHTML = '&#x25B6;';
+    }
+  };
+  scrubber.oninput = function() {
+    audioPlayer.currentTime = parseFloat(scrubber.value);
+  };
+  setBtn.onclick = function() {
+    audioStartSec = Math.floor(audioPlayer.currentTime);
+    if (startEl) startEl.textContent = 'Start: ' + fmtTime(audioStartSec);
+  };
+}
+
+function loadMusicTracks() {
+  fetch('/api/music')
+    .then(function(r) { return r.json(); })
+    .then(function(tracks) {
+      cachedTracks = tracks;
+      populateTrackDropdown();
+    })
+    .catch(function() {});
+}
+
+function populateTrackDropdown() {
+  var sel = document.getElementById('vb-track');
+  if (!sel || !cachedTracks.length) return;
+  // Clear existing options except the first "No music" one
+  while (sel.options.length > 1) sel.remove(1);
+  cachedTracks.forEach(function(t) {
+    var opt = document.createElement('option');
+    opt.value = t.url;
+    opt.textContent = t.label;
+    sel.appendChild(opt);
+  });
+}
+
+function init() {
+  fetch('/api/library')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      library = data;
+      renderStats();
+      renderTree(library.professionals);
+      document.getElementById('search').addEventListener('input', onFilter);
+      document.getElementById('filter').addEventListener('change', onFilter);
+      loadMusicTracks();
+    })
+    .catch(function(e) {
+      document.getElementById('prof-list').innerHTML = '<div class="empty">Failed to load: ' + e + '</div>';
+    });
+}
+
+function renderStats() {
+  var total = 0, posted = 0;
+  library.professionals.forEach(function(p) {
+    total += p.total_images;
+    p.images.forEach(function(i) { if (i.posted) posted++; });
+  });
+  document.getElementById('stats').textContent =
+    library.professionals.length + ' pros Â· ' + total + ' images Â· ' + posted + ' posted';
+}
+
+function onFilter() {
+  var q = document.getElementById('search').value.toLowerCase();
+  var f = document.getElementById('filter').value;
+  var profs = library.professionals;
+  if (q) profs = profs.filter(function(p) {
+    return (p.professional_name||'').toLowerCase().indexOf(q) !== -1 ||
+           (p.city||'').toLowerCase().indexOf(q) !== -1 ||
+           (p.specialty||'').toLowerCase().indexOf(q) !== -1;
+  });
+  if (f === 'unposted') profs = profs.filter(function(p) { return p.images.some(function(i) { return !i.posted; }); });
+  if (f === 'posted')   profs = profs.filter(function(p) { return p.images.every(function(i) { return i.posted; }); });
+  renderTree(profs);
+  // If searching, auto-open everything
+  if (q || f !== 'all') {
+    document.querySelectorAll('.city-group, .prof-group').forEach(function(el) { el.classList.add('open'); });
+    document.querySelectorAll('.caret, .city-caret').forEach(function(el) { el.classList.add('open'); });
+  }
+}
+
+function renderTree(profs) {
+  // Group: region â†’ city â†’ professionals
+  var tree = {};
+  profs.forEach(function(p) {
+    var region = cityToRegion(p.city);
+    var city   = p.city || 'Unknown';
+    if (!tree[region]) tree[region] = {};
+    if (!tree[region][city]) tree[region][city] = [];
+    tree[region][city].push(p);
+  });
+
+  var el = document.getElementById('prof-list');
+  if (!profs.length) { el.innerHTML = '<div class="empty">No results</div>'; return; }
+
+  var html = '';
+  REGION_ORDER.forEach(function(region) {
+    if (!tree[region]) return;
+    var cities = tree[region];
+    var regionProfs = 0;
+    Object.values(cities).forEach(function(ps) { regionProfs += ps.length; });
+    var rOpen = openRegions[region] ? ' open' : '';
+
+    html += '<div class="region-row" data-region="' + esc(region) + '">' +
+      '<span class="caret' + rOpen + '">&#x25B6;</span>' +
+      '<span class="region-name">' + esc(region) + '</span>' +
+      '<span class="region-count">' + regionProfs + '</span>' +
+    '</div>' +
+    '<div class="city-group' + rOpen + '" data-region-body="' + esc(region) + '">';
+
+    Object.keys(cities).sort().forEach(function(city) {
+      var ps = cities[city];
+      var cKey = region + '|' + city;
+      var cOpen = openCities[cKey] ? ' open' : '';
+      html += '<div class="city-row" data-city-key="' + esc(cKey) + '">' +
+        '<span class="city-caret' + cOpen + '">&#x25B6;</span>' +
+        '<span class="city-name">' + esc(city) + '</span>' +
+        '<span class="city-count">' + ps.length + '</span>' +
+      '</div>' +
+      '<div class="prof-group' + cOpen + '" data-city-body="' + esc(cKey) + '">';
+
+      ps.forEach(function(p) {
+        var posted = p.images.filter(function(i) { return i.posted; }).length;
+        var active = p.professional_id === activeProfId ? ' active' : '';
+        var badgeCls = posted > 0 ? ' has-posted' : '';
+        html += '<div class="prof-item' + active + '" data-id="' + esc(p.professional_id) + '">' +
+          '<div class="prof-name">' + esc(p.professional_name) + '</div>' +
+          '<div class="prof-meta">' + esc(p.specialty || '') + '</div>' +
+          '<span class="prof-badge' + badgeCls + '">' + posted + '/' + p.total_images + ' posted</span>' +
+        '</div>';
+      });
+
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+
+  el.innerHTML = html;
+
+  // Region toggle
+  el.querySelectorAll('.region-row').forEach(function(row) {
+    row.addEventListener('click', function() {
+      var region = row.dataset.region;
+      var body   = el.querySelector('[data-region-body="' + region + '"]');
+      var caret  = row.querySelector('.caret');
+      var isOpen = body.classList.toggle('open');
+      caret.classList.toggle('open', isOpen);
+      openRegions[region] = isOpen;
+    });
+  });
+
+  // City toggle
+  el.querySelectorAll('.city-row').forEach(function(row) {
+    row.addEventListener('click', function() {
+      var key  = row.dataset.cityKey;
+      var body = el.querySelector('[data-city-body="' + key + '"]');
+      var caret = row.querySelector('.city-caret');
+      var isOpen = body.classList.toggle('open');
+      caret.classList.toggle('open', isOpen);
+      openCities[key] = isOpen;
+    });
+  });
+
+  // Professional click
+  el.querySelectorAll('.prof-item').forEach(function(item) {
+    item.addEventListener('click', function() { selectProf(item.dataset.id); });
+  });
+}
+
+// â”€â”€ Professional panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function getProf(id) {
+  return library.professionals.find(function(p) { return p.professional_id === id; });
+}
+
+function selectProf(id) {
+  activeProfId = id;
+  document.querySelectorAll('.prof-item').forEach(function(el) {
+    el.classList.toggle('active', el.dataset.id === id);
+  });
+  var prof = getProf(id);
+  if (prof) renderPanel(prof);
+}
+
+function renderPanel(prof) {
+  if (!prof._order) prof._order = prof.images.map(function(_, i) { return i; });
+
+  var panel = document.getElementById('image-panel');
+  var websiteLink = prof.website
+    ? '<a href="' + esc(prof.website) + '" target="_blank">&#x2197; Website</a>' : '';
+
+  var cardsHtml = '';
+  prof._order.forEach(function(imgIdx, seq) { cardsHtml += buildCard(prof, imgIdx, seq); });
+
+  panel.innerHTML =
+    '<div id="panel-header">' +
+      '<h2>' + esc(prof.professional_name) + '</h2>' +
+      '<p>' + esc(prof.attribution) + '&nbsp;&nbsp;' + websiteLink + '</p>' +
+    '</div>' +
+    '<div id="video-bar">' +
+      '<label>Secs/image</label>' +
+      '<input type="number" id="vb-dur" value="3" min="1" max="10">' +
+      '<label>Format</label>' +
+      '<select id="vb-fmt">' +
+        '<option value="square">Square 1080Ã—1080</option>' +
+        '<option value="portrait">Portrait 1080Ã—1350</option>' +
+        '<option value="reel">Reel 1080Ã—1920 (9:16)</option>' +
+      '</select>' +
+      '<div class="vb-sep"></div>' +
+      '<label>Track</label>' +
+      '<select id="vb-track"><option value="">â€” No music â€”</option></select>' +
+      '<label style="color:#444">or upload</label>' +
+      '<input type="file" id="vb-upload" accept="audio/*">' +
+      '<span class="drag-hint">&#x2630; Drag to reorder</span>' +
+      '<button class="btn-video" id="btn-create-video">&#x1F3AC; Create Video</button>' +
+    '</div>' +
+    '<div id="audio-bar">' +
+      '<button id="btn-audio-play">&#x25B6;</button>' +
+      '<input type="range" id="audio-scrubber" value="0" min="0" step="0.1">' +
+      '<span id="audio-time">0:00 / 0:00</span>' +
+      '<button id="btn-set-start">&#x1F4CD; Set start here</button>' +
+      '<span id="start-display">Start: 0:00</span>' +
+    '</div>' +
+    '<div id="video-progress"><div class="spinner"></div><span id="vp-msg">Creating video...</span></div>' +
+    '<div class="image-grid" id="image-grid">' + cardsHtml + '</div>';
+
+  attachCardEvents(prof);
+  populateTrackDropdown();
+
+  var trackSel = document.getElementById('vb-track');
+  if (trackSel) {
+    trackSel.onchange = function() { setupAudioBar(trackSel.value); };
+  }
+  var uploadInput = document.getElementById('vb-upload');
+  if (uploadInput) {
+    uploadInput.onchange = function() {
+      if (uploadInput.files[0]) {
+        var url = URL.createObjectURL(uploadInput.files[0]);
+        setupAudioBar(url);
+        // Clear track dropdown when file uploaded
+        if (trackSel) trackSel.value = '';
+      }
+    };
+  }
+
+  document.getElementById('btn-create-video').addEventListener('click', function() { createVideo(prof); });
+}
+
+function buildCard(prof, imgIdx, seq) {
+  var img = prof.images[imgIdx];
+  var postedCls = img.posted ? ' posted' : '';
+  var typeCls = img.image_type === 'banner' ? ' banner' : '';
+  var typeLabel = img.image_type.replace(/_/g,' ');
+  var postLabel = img.posted ? 'âœ“ Posted' : 'Mark posted';
+  var postDone  = img.posted ? ' done' : '';
+  return '<div class="image-card' + postedCls + '" data-img-idx="' + imgIdx + '" data-seq="' + seq + '" draggable="true">' +
+    '<div class="drag-handle">â˜°</div>' +
+    '<div class="seq-badge">' + (seq+1) + '</div>' +
+    '<div class="img-wrap"><img src="' + esc(img.image_url) + '" alt="' + esc(typeLabel) + '" ' +
+      'onerror="this.style.display=\'none\';this.parentNode.innerHTML+=\'<div class=broken>Unavailable</div>\'"></div>' +
+    '<div class="card-body">' +
+      '<div class="card-type' + typeCls + '">' + typeLabel + '</div>' +
+      '<div class="caption-box">' + nl2br(prof.instagram_caption || img.instagram_caption) + '</div>' +
+      '<button class="toggle-btn">Show more</button>' +
+      '<div class="hashtags">' + esc(prof.hashtags || img.hashtags) + '</div>' +
+      '<div class="card-actions">' +
+        '<button class="btn btn-copy" data-img-idx="' + imgIdx + '">&#x1F4CB; Copy</button>' +
+        '<button class="btn btn-dl"   data-img-idx="' + imgIdx + '">&#x2B07; Download</button>' +
+        '<button class="btn btn-post' + postDone + '" data-img-idx="' + imgIdx + '">' + postLabel + '</button>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+function attachCardEvents(prof) {
+  var grid = document.getElementById('image-grid');
+  if (!grid) return;
+
+  grid.querySelectorAll('.toggle-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var box = btn.previousElementSibling;
+      box.classList.toggle('open');
+      btn.textContent = box.classList.contains('open') ? 'Show less' : 'Show more';
+    });
+  });
+
+  grid.querySelectorAll('.btn-copy').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var img = prof.images[parseInt(btn.dataset.imgIdx)];
+      navigator.clipboard.writeText((prof.instagram_caption || img.instagram_caption) + '\n\n' + (prof.hashtags || img.hashtags))
+        .then(function() { toast('Caption copied!'); })
+        .catch(function() { toast('Copy failed'); });
+    });
+  });
+
+  grid.querySelectorAll('.btn-dl').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var img = prof.images[parseInt(btn.dataset.imgIdx)];
+      var fname = prof.professional_name.replace(/[^a-zA-Z0-9]/g,'_') + '_' + img.image_type;
+      fetch('/api/download?url=' + encodeURIComponent(img.image_url))
+        .then(function(r) { if (!r.ok) throw new Error(); return r.blob(); })
+        .then(function(blob) {
+          var a = document.createElement('a');
+          a.href = URL.createObjectURL(blob); a.download = fname + '.png'; a.click();
+          toast('Downloading...');
+        })
+        .catch(function() { toast('Download failed'); });
+    });
+  });
+
+  grid.querySelectorAll('.btn-post').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var imgIdx = parseInt(btn.dataset.imgIdx);
+      var img = prof.images[imgIdx];
+      img.posted = !img.posted;
+      prof.next_image_index = prof.images.findIndex(function(x) { return !x.posted; });
+      if (prof.next_image_index === -1) prof.next_image_index = prof.total_images;
+      fetch('/api/mark_posted', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({professional_id: prof.professional_id, image_index: imgIdx, posted: img.posted})
+      });
+      var card = grid.querySelector('[data-img-idx="' + imgIdx + '"].image-card');
+      if (card) {
+        card.classList.toggle('posted', img.posted);
+        btn.textContent = img.posted ? 'âœ“ Posted' : 'Mark posted';
+        btn.classList.toggle('done', img.posted);
+      }
+      renderStats();
+      toast(img.posted ? 'Marked as posted' : 'Unmarked');
+    });
+  });
+
+  // Drag-and-drop reorder
+  var cards = grid.querySelectorAll('.image-card');
+  cards.forEach(function(card) {
+    card.addEventListener('dragstart', function(e) {
+      dragSrcIdx = parseInt(card.dataset.seq);
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    card.addEventListener('dragend', function() {
+      card.classList.remove('dragging');
+      grid.querySelectorAll('.image-card').forEach(function(c) { c.classList.remove('drag-over'); });
+    });
+    card.addEventListener('dragover', function(e) {
+      e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+      grid.querySelectorAll('.image-card').forEach(function(c) { c.classList.remove('drag-over'); });
+      card.classList.add('drag-over');
+    });
+    card.addEventListener('drop', function(e) {
+      e.preventDefault();
+      var destSeq = parseInt(card.dataset.seq);
+      if (dragSrcIdx === null || dragSrcIdx === destSeq) return;
+      var moved = prof._order.splice(dragSrcIdx, 1)[0];
+      prof._order.splice(destSeq, 0, moved);
+      dragSrcIdx = null;
+      renderPanel(prof);
+    });
+  });
+}
+
+// â”€â”€ Video â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function createVideo(prof) {
+  var dur         = parseInt(document.getElementById('vb-dur').value) || 3;
+  var fmt         = document.getElementById('vb-fmt').value;
+  var trackSel    = document.getElementById('vb-track');
+  var uploadInput = document.getElementById('vb-upload');
+  var btn         = document.getElementById('btn-create-video');
+  var prog        = document.getElementById('video-progress');
+  var msg         = document.getElementById('vp-msg');
+
+  var selectedTrack = trackSel ? trackSel.value : '';
+  var startSec      = audioStartSec || 0;
+  var uploadedFile  = uploadInput && uploadInput.files[0] ? uploadInput.files[0] : null;
+
+  btn.disabled = true;
+  prog.classList.add('show');
+
+  var jsonPayload = {
+    professional_id: prof.professional_id,
+    image_order: prof._order,
+    duration: dur,
+    format: fmt,
+    music_start_sec: startSec
+  };
+  if (selectedTrack && !uploadedFile) {
+    jsonPayload.music_url = selectedTrack;
+  }
+
+  var formData = new FormData();
+  formData.append('json', JSON.stringify(jsonPayload));
+  if (uploadedFile) {
+    formData.append('music', uploadedFile);
+    msg.textContent = 'Encoding video + mixing uploaded track from ' + fmtTime(audioStartSec) + '...';
+  } else if (selectedTrack) {
+    msg.textContent = 'Encoding video + mixing "' + trackSel.options[trackSel.selectedIndex].text + '" from ' + fmtTime(audioStartSec) + '...';
+  } else {
+    msg.textContent = 'Downloading ' + prof._order.length + ' images and encoding video...';
+  }
+
+  fetch('/api/create_video', { method: 'POST', body: formData })
+    .then(function(r) {
+      if (!r.ok) return r.json().then(function(d) { throw new Error(d.error || 'Failed'); });
+      return r.blob();
+    })
+    .then(function(blob) {
+      var safe = prof.professional_name.replace(/[^a-zA-Z0-9]/g,'_');
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = safe + '_slideshow.mp4'; a.click();
+      toast('Video downloaded!');
+    })
+    .catch(function(e) { toast('Video failed: ' + e.message); })
+    .finally(function() { btn.disabled = false; prog.classList.remove('show'); });
+}
+
+init();
+</script>
+</body>
+</html>
+
+
