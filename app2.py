@@ -422,12 +422,15 @@ def api_create_video():
     safe_name = "".join(c if c.isalnum() or c in "-_" else "_"
                         for c in prof["professional_name"])
     filename  = f"{safe_name}_slideshow.mp4"
-    return send_file(
-        io.BytesIO(video_bytes),
+    buf = io.BytesIO(video_bytes)
+    response = send_file(
+        buf,
         mimetype="video/mp4",
         as_attachment=True,
         download_name=filename
     )
+    response.headers["Content-Length"] = len(video_bytes)
+    return response
 
 
 if __name__ == "__main__":
