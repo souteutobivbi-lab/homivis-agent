@@ -209,6 +209,15 @@ header span { font-size: .78rem; color: #666 }
 }
 #toast.show { opacity: 1 }
 .empty { padding: 48px 20px; text-align: center; color: #333 }
+
+@media (max-width: 768px) {
+  #app { flex-direction: column !important; }
+  #sidebar { width: 100% !important; max-width: 100% !important; height: auto !important; max-height: 40vh; overflow-y: auto; }
+  #main { width: 100% !important; }
+  #vb-bar { flex-wrap: wrap; gap: 6px; }
+  #vb-track { min-width: 100% !important; max-width: 100% !important; }
+  .vb-images { grid-template-columns: repeat(2, 1fr) !important; }
+}
 </style>
 </head>
 <body>
