@@ -411,6 +411,10 @@ function setupAudioBar(url) {
 
   bar.classList.add('show');
   audioPlayer = new Audio(url);
+  audioPlayer.addEventListener('error', function(e) {
+    console.error('Audio error:', audioPlayer.error, e);
+    alert('Audio failed to load: ' + (audioPlayer.error ? audioPlayer.error.message : 'unknown error') + ' URL: ' + url);
+  });
   audioPlayer.addEventListener('loadedmetadata', function() {
     scrubber.max = audioPlayer.duration;
     if (timeEl) timeEl.textContent = '0:00 / ' + fmtTime(audioPlayer.duration);
