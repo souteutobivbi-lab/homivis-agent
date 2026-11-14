@@ -411,6 +411,8 @@ function setupAudioBar(url) {
 
   bar.classList.add('show');
   audioPlayer = new Audio(url);
+  audioPlayer.crossOrigin = 'anonymous';
+  audioPlayer.load();
   audioPlayer.addEventListener('error', function(e) {
     console.error('Audio error:', audioPlayer.error, e);
     alert('Audio failed to load: ' + (audioPlayer.error ? audioPlayer.error.message : 'unknown error') + ' URL: ' + url);
