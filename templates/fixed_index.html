@@ -653,6 +653,20 @@ function renderPanel(prof) {
   if (trackSel) {
     trackSel.onchange = function() { setupAudioBar(trackSel.value); };
   }
+  // Wire play button once here after DOM is ready
+  var playBtnEl = document.getElementById('btn-audio-play');
+  if (playBtnEl) {
+    playBtnEl.onclick = function() {
+      if (!audioPlayer) return;
+      if (audioPlayer.paused) {
+        audioPlayer.play();
+        this.innerHTML = '&#x23F8;';
+      } else {
+        audioPlayer.pause();
+        this.innerHTML = '&#x25B6;';
+      }
+    };
+  }
   var uploadInput = document.getElementById('vb-upload');
   if (uploadInput) {
     uploadInput.onchange = function() {
