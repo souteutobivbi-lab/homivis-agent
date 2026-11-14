@@ -415,6 +415,10 @@ function setupAudioBar(url) {
     console.error('Audio error:', audioPlayer.error, e);
     alert('Audio failed to load: ' + (audioPlayer.error ? audioPlayer.error.message : 'unknown error') + ' URL: ' + url);
   });
+  audioPlayer.addEventListener('canplay', function() {
+    audioPlayer.play().catch(function(e) { console.warn('Autoplay blocked:', e); });
+    if (playBtn) playBtn.innerHTML = '&#x23F8;';
+  });
   audioPlayer.addEventListener('loadedmetadata', function() {
     scrubber.max = audioPlayer.duration;
     if (timeEl) timeEl.textContent = '0:00 / ' + fmtTime(audioPlayer.duration);
