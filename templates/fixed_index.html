@@ -394,58 +394,41 @@ function fmtTime(s) {
 }
 
 function setupAudioBar(url) {
-  var bar      = document.getElementById('audio-bar');
-  var playBtn  = document.getElementById('btn-audio-play');
-  var scrubber = document.getElementById('audio-scrubber');
-  var timeEl   = document.getElementById('audio-time');
-  var setBtn   = document.getElementById('btn-set-start');
-  var startEl  = document.getElementById('start-display');
+  var bar     = document.getElementById('audio-bar');
+  var playBtn = document.getElementById('btn-audio-play');
+  var scrubber= document.getElementById('audio-scrubber');
+  var timeEl  = document.getElementById('audio-time');
+  var setBtn  = document.getElementById('btn-set-start');
+  var startEl = document.getElementById('start-display');
   if (!bar) return;
-
-  // Destroy previous player
   if (audioPlayer) { audioPlayer.pause(); audioPlayer = null; }
   audioStartSec = 0;
   if (startEl) startEl.textContent = 'Start: 0:00';
-
   if (!url) { bar.classList.remove('show'); return; }
-
   bar.classList.add('show');
-  audioPlayer = new Audio(url);
+  audioPlayer = new Audio();
   audioPlayer.crossOrigin = 'anonymous';
-  audioPlayer.load();
-  audioPlayer.addEventListener('error', function(e) {
-    console.error('Audio error:', audioPlayer.error, e);
-    alert('Audio failed to load: ' + (audioPlayer.error ? audioPlayer.error.message : 'unknown error') + ' URL: ' + url);
-  });
-  audioPlayer.addEventListener('canplay', function() {
-    audioPlayer.play().catch(function(e) { console.warn('Autoplay blocked:', e); });
-    if (playBtn) playBtn.innerHTML = '&#x23F8;';
-  });
-  audioPlayer.addEventListener('loadedmetadata', function() {
-    scrubber.max = audioPlayer.duration;
-    if (timeEl) timeEl.textContent = '0:00 / ' + fmtTime(audioPlayer.duration);
-  });
-  audioPlayer.addEventListener('timeupdate', function() {
-    scrubber.value = audioPlayer.currentTime;
+  audioPlayer.src = url;
+  audioPlayer.ontimeupdate = function() {
+    if (scrubber) scrubber.value = audioPlayer.currentTime;
     if (timeEl) timeEl.textContent = fmtTime(audioPlayer.currentTime) + ' / ' + fmtTime(audioPlayer.duration);
-  });
-  audioPlayer.addEventListener('ended', function() {
-    if (playBtn) playBtn.innerHTML = '&#x25B6;';
-  });
-
-  playBtn.onclick = function() {
-    if (audioPlayer.paused) {
-      audioPlayer.play();
-      playBtn.innerHTML = '&#x23F8;';
-    } else {
-      audioPlayer.pause();
-      playBtn.innerHTML = '&#x25B6;';
-    }
+    if (scrubber) scrubber.max = audioPlayer.duration;
   };
-  scrubber.oninput = function() {
-    audioPlayer.currentTime = parseFloat(scrubber.value);
-  };
-  setBtn.onclick = function() {
+  audioPlayer.onended = function() { if (playBtn) playBtn.innerHTML = '&#x25B6;'; };
+  audioPlayer.onerror = function() { console.error('Audio error', audioPlayer.error); };
+  if (playBtn) {
+    playBtn.innerHTML = '&#x25B6;';
+    playBtn.onclick = function() {
+      if (audioPlayer.paused) {
+        audioPlayer.play().then(function(){ playBtn.innerHTML = '&#x23F8;'; }).catch(function(e){ console.error(e); });
+      } else {
+        audioPlayer.pause();
+        playBtn.innerHTML = '&#x25B6;';
+      }
+    };
+  }
+  if (scrubber) scrubber.oninput = function() { audioPlayer.currentTime = parseFloat(scrubber.value); };
+  if (setBtn) setBtn.onclick = function() {
     audioStartSec = Math.floor(audioPlayer.currentTime);
     if (startEl) startEl.textContent = 'Start: ' + fmtTime(audioStartSec);
   };
