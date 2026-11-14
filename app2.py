@@ -308,14 +308,17 @@ def api_create_video():
             )
 
             clip_path = os.path.join(tmp, f"clip_{i:04d}.mp4")
+            vf = (
+                f"zoompan=z='{zoom_expr}':x='{x_expr}':y='{y_expr}'"
+                f":d={total_frames}:s={width}x{height}:fps={FPS},"
+                f"trim=duration={clip_dur},setpts=PTS-STARTPTS"
+            )
+            if i == 0:
+                vf += f",hue=s='min(1\\\\,t/{clip_dur:.4f})'"
             clip_cmd = [
                 FFMPEG, "-y",
                 "-loop", "1", "-t", str(clip_dur), "-i", img_path,
-                "-vf", (
-                    f"zoompan=z='{zoom_expr}':x='{x_expr}':y='{y_expr}'"
-                    f":d={total_frames}:s={width}x{height}:fps={FPS},"
-                    f"trim=duration={clip_dur},setpts=PTS-STARTPTS"
-                ),
+                "-vf", vf,
                 "-c:v", "libx264", "-pix_fmt", "yuv420p",
                 "-r", str(FPS), "-an",
                 clip_path
