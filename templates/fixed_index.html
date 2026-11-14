@@ -406,9 +406,8 @@ function setupAudioBar(url) {
   if (startEl) startEl.textContent = 'Start: 0:00';
   if (!url) { bar.classList.remove('show'); return; }
   bar.classList.add('show');
-  audioPlayer = new Audio();
+  audioPlayer = new Audio(url);
   audioPlayer.crossOrigin = 'anonymous';
-  audioPlayer.src = url;
   audioPlayer.ontimeupdate = function() {
     if (scrubber) scrubber.value = audioPlayer.currentTime;
     if (timeEl) timeEl.textContent = fmtTime(audioPlayer.currentTime) + ' / ' + fmtTime(audioPlayer.duration);
