@@ -314,7 +314,7 @@ def api_create_video():
                 f"trim=duration={clip_dur},setpts=PTS-STARTPTS"
             )
             if i == 0:
-                vf += f",hue=s='min(1\\\\,t/{clip_dur:.4f})'"
+                vf += f",hue=s='min(1,t/{clip_dur:.4f})'"
             clip_cmd = [
                 FFMPEG, "-y",
                 "-loop", "1", "-t", str(clip_dur), "-i", img_path,
