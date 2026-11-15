@@ -288,11 +288,43 @@ def api_create_video():
         total_frames = duration * FPS
         clip_dur     = duration + XFADE_DUR   # each clip slightly longer for xfade overlap
 
-        # Pass 1: render each image as a short clip with Ken Burns motion
+        # Generate audio punch (0.3s sine wave hit)
+        punch_path = os.path.join(tmp, "punch.wav")
+        subprocess.run([
+            FFMPEG, "-y", "-f", "lavfi",
+            "-i", "sine=frequency=120:duration=0.3",
+            "-af", "afade=t=out:st=0.1:d=0.2",
+            punch_path
+        ], capture_output=True)
+
+        # Pass 1a: render flash cut intro clips (3 x 0.4s rapid cuts from first images)
+        flash_paths = []
+        flash_sources = frame_paths[:min(3, len(frame_paths))]
+        for fi, img_path in enumerate(flash_sources):
+            fp = os.path.join(tmp, f"flash_{fi:04d}.mp4")
+            flash_zoom = 1.0 + fi * 0.04
+            subprocess.run([
+                FFMPEG, "-y", "-loop", "1", "-t", "0.4", "-i", img_path,
+                "-vf", (
+                    f"zoompan=z={flash_zoom:.2f}:x=iw*0.02:y=ih*0.02"
+                    f":d={int(0.4*FPS)}:s={width}x{height}:fps={FPS},"
+                    f"trim=duration=0.4,setpts=PTS-STARTPTS,"
+                    f"hue=s=0"
+                ),
+                "-c:v", "libx264", "-pix_fmt", "yuv420p", "-r", str(FPS), "-an", fp
+            ], capture_output=True)
+            flash_paths.append(fp)
+
+        # Pass 1b: render each image as a full clip with Ken Burns motion
         clip_paths = []
         for i, img_path in enumerate(frame_paths):
             kb = KB_PATTERNS[i % len(KB_PATTERNS)]
             zs, ze, xs, ys, xe, ye = kb
+
+            # First clip: faster dramatic zoom in, full black and white
+            if i == 0:
+                zs, ze = 1.12, 1.0  # zoom out from tight crop = reveal effect
+                xs, ys, xe, ye = -0.06, -0.06, 0.0, 0.0
 
             zoom_expr = (
                 f"if(eq(on\\,1)\\,{zs:.4f}\\,"
@@ -314,7 +346,7 @@ def api_create_video():
                 f"trim=duration={clip_dur},setpts=PTS-STARTPTS"
             )
             if i == 0:
-                vf += f",hue=s='min(1,t/{clip_dur:.4f})'"
+                vf += ",hue=s=0"
             clip_cmd = [
                 FFMPEG, "-y",
                 "-loop", "1", "-t", str(clip_dur), "-i", img_path,
@@ -330,13 +362,17 @@ def api_create_video():
             clip_paths.append(clip_path)
             print(f"  Clip {i+1}/{n} rendered")
 
+        # Prepend flash cuts to clip list
+        all_clips = flash_paths + clip_paths
+        n_all = len(all_clips)
+
         out_path = os.path.join(tmp, "slideshow.mp4")
 
         # Pass 2: join clips with xfade dissolve
-        if n == 1:
+        if n_all == 1:
             # Single image — just trim to exact duration
             cmd = [
-                FFMPEG, "-y", "-i", clip_paths[0],
+                FFMPEG, "-y", "-i", all_clips[0],
                 "-t", str(duration),
                 "-c:v", "libx264", "-pix_fmt", "yuv420p", "-movflags", "+faststart",
                 out_path
@@ -345,14 +381,14 @@ def api_create_video():
         else:
             # Build xfade chain
             inputs_cmd = []
-            for cp in clip_paths:
+            for cp in all_clips:
                 inputs_cmd += ["-i", cp]
 
             filter_parts = []
             prev = "[0:v]"
-            for i in range(1, n):
+            for i in range(1, n_all):
                 offset = duration * i - XFADE_DUR * i
-                label  = f"[xf{i}]" if i < n - 1 else "[vout]"
+                label  = f"[xf{i}]" if i < n_all - 1 else "[vout]"
                 filter_parts.append(
                     f"{prev}[{i}:v]xfade=transition=dissolve"
                     f":duration={XFADE_DUR}:offset={offset:.3f}{label}"
