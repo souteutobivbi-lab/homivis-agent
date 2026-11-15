@@ -462,6 +462,35 @@ def api_create_video():
             out_path = mixed_path
             print(f"  Final video size: {os.path.getsize(out_path)} bytes")
 
+        # Burn in logo watermark (center, 65% down, semi-transparent)
+        logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logo.png')
+        if os.path.exists(logo_path):
+            wm_path = os.path.join(tmp, "slideshow_wm.mp4")
+            wm_cmd = [
+                FFMPEG, "-y",
+                "-i", out_path,
+                "-i", logo_path,
+                "-filter_complex",
+                (
+                    "[1:v]scale=iw*0.22:-1,"
+                    "colorkey=white:0.35:0.1,"
+                    "format=rgba,"
+                    "colorchannelmixer=aa=0.35[logo];"
+                    "[0:v][logo]overlay=(W-w)/2:(H-h)*0.65[vout]"
+                ),
+                "-map", "[vout]", "-map", "0:a?",
+                "-c:v", "libx264", "-profile:v", "high", "-level", "4.0",
+                "-pix_fmt", "yuv420p", "-c:a", "copy",
+                "-movflags", "+faststart",
+                wm_path
+            ]
+            wr = subprocess.run(wm_cmd, capture_output=True, text=True)
+            if wr.returncode == 0:
+                out_path = wm_path
+                print("  Logo watermark burned in")
+            else:
+                print(f"  Watermark skipped: {wr.stderr[-200:]}")
+
         with open(out_path, "rb") as fh:
             video_bytes = fh.read()
 
