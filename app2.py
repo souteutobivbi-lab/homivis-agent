@@ -472,10 +472,9 @@ def api_create_video():
                 "-i", logo_path,
                 "-filter_complex",
                 (
-                    "[1:v]scale=iw*0.22:-1,"
-                    "colorkey=white:0.35:0.1,"
+                    "[1:v]scale=iw*0.28:-1,"
                     "format=rgba,"
-                    "colorchannelmixer=aa=0.35[logo];"
+                    "colorchannelmixer=aa=0.45[logo];"
                     "[0:v][logo]overlay=(W-w)/2:(H-h)*0.65[vout]"
                 ),
                 "-map", "[vout]", "-map", "0:a?",
