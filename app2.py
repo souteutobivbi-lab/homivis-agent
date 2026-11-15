@@ -299,7 +299,7 @@ def api_create_video():
 
         # Pass 1a: render flash cut intro clips (3 x 0.4s rapid cuts from first images)
         flash_paths = []
-        flash_sources = frame_paths[:min(3, len(frame_paths))]
+        flash_sources = frame_paths  # flash ALL images as rapid preview
         for fi, img_path in enumerate(flash_sources):
             fp = os.path.join(tmp, f"flash_{fi:04d}.mp4")
             flash_zoom = 1.0 + fi * 0.04
