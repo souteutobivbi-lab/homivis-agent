@@ -384,14 +384,25 @@ def api_create_video():
             for cp in all_clips:
                 inputs_cmd += ["-i", cp]
 
+            FLASH_DUR = 0.4
+            FLASH_XF  = 0.1
+            n_flash   = len(flash_paths)
+
             filter_parts = []
             prev = "[0:v]"
             for i in range(1, n_all):
-                offset = duration * i - XFADE_DUR * i
+                # Offset = cumulative net duration of all clips before i
+                offset = 0.0
+                for j in range(i):
+                    if j < n_flash:
+                        offset += FLASH_DUR - FLASH_XF
+                    else:
+                        offset += duration
+                xf_dur = FLASH_XF if i <= n_flash else XFADE_DUR
                 label  = f"[xf{i}]" if i < n_all - 1 else "[vout]"
                 filter_parts.append(
                     f"{prev}[{i}:v]xfade=transition=dissolve"
-                    f":duration={XFADE_DUR}:offset={offset:.3f}{label}"
+                    f":duration={xf_dur}:offset={offset:.3f}{label}"
                 )
                 prev = label
 
