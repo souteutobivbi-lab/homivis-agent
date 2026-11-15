@@ -309,7 +309,7 @@ def api_create_video():
                     f"zoompan=z={flash_zoom:.2f}:x=iw*0.02:y=ih*0.02"
                     f":d={int(0.4*FPS)}:s={width}x{height}:fps={FPS},"
                     f"trim=duration=0.4,setpts=PTS-STARTPTS,"
-                    f"hue=s=0"
+                    f"hue=s=0,vignette=angle=PI/5"
                 ),
                 "-c:v", "libx264", "-pix_fmt", "yuv420p", "-r", str(FPS), "-an", fp
             ], capture_output=True)
@@ -345,8 +345,7 @@ def api_create_video():
                 f":d={total_frames}:s={width}x{height}:fps={FPS},"
                 f"trim=duration={clip_dur},setpts=PTS-STARTPTS"
             )
-            if i == 0:
-                vf += ",hue=s=0"
+            vf += ",hue=s=0,vignette=angle=PI/5"
             clip_cmd = [
                 FFMPEG, "-y",
                 "-loop", "1", "-t", str(clip_dur), "-i", img_path,
